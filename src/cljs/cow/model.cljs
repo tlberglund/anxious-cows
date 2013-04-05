@@ -3,32 +3,55 @@
             [clojure.browser.dom :as dom]
             [goog.Timer]))
 
-(def cow-count 50)
+(def cow-count 20)
 (def pi 3.1415926535)
 
+
+(defn x-from-polar [theta radius]
+  (* radius (Math/cos theta)))
+
+(defn y-from-polar [theta radius]
+  (* radius (Math/sin theta)))
+
 (defn random-cow []
-  (let [cow (atom {
-    :anxiety 0
-    :angle (- (* 2 pi) (rand (* 4 pi)))
-    :velocity (rand)
-    :x (- 1 (rand 2))
-    :y (- 1 (rand 2))
-    :self-differentiation (rand)
-    })]
+  (let [theta (- (* 2 pi) (rand (* 4 pi)))
+        radius (rand)
+        cow (atom {
+        :anxiety 0
+        :angle (- (* 2 pi) (rand (* 4 pi)))
+        :velocity (rand 0.01)
+        :x (x-from-polar theta radius)
+        :y (y-from-polar theta radius)
+        :self-differentiation (rand)
+        })]
     cow)
   )
 
 (def canvas (dom/get-element "model"))
-(def timer (goog.Timer. (/ 1000 60)))
+(def timer (goog.Timer. (/ 1000 20)))
 
-(defn init-simulator [count]
-  (let [cows (doall (take cow-count (repeatedly random-cow)))]
-    
-    cows))
+(def cows (doall (take cow-count (repeatedly random-cow))))
 
-(def cows (init-simulator cow-count))
 
-(defn paint-cow [canvas]
+
+(defn sim-cows [cows]
+  (doseq [cow cows]
+    (let [new-x (+ (:x @cow) (x-from-polar (:angle @cow) (:velocity @cow)))
+          new-y (+ (:y @cow) (y-from-polar (:angle @cow) (:velocity @cow)))
+          ]
+      (swap! cow assoc :x new-x :y new-y))))
+
+(defn init-canvas [canvas]
+  (let [ctx (.getContext canvas "2d")
+        width (.getAttribute canvas "width")
+        height (.getAttribute canvas "height")]
+    (do
+      (.clearRect ctx 0 0 width height)
+      (.beginPath ctx)
+      (.arc ctx (/ width 2) (/ height 2) (/ width 2) 0 (* 2 pi) false)
+      (.stroke ctx))))
+
+(defn paint-cow [canvas cow]
   (let [ctx (.getContext canvas "2d")
         width (.getAttribute canvas "width")
         height (.getAttribute canvas "height")
@@ -40,11 +63,15 @@
       (.closePath ctx)))
 
 (defn paint-sim [canvas cows]
-  (doseq [cow cows]
-    (paint-cow canvas @cow)))
+  (do 
+    (init-canvas canvas)
+    (doseq [cow cows]
+      (paint-cow canvas @cow))))
 
 (defn cow-sim []
-  (paint-sim canvas cows))
+  (do
+    (sim-cows cows)
+    (paint-sim canvas cows)))
 
 (event/listen timer goog.Timer/TICK cow-sim)
 (.start timer)

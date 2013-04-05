@@ -14684,22 +14684,44 @@ clojure.browser.dom.set_value = function(a, b) {
 clojure.browser.dom.click_element = function(a) {
   return clojure.browser.dom.ensure_element.call(null, a).click(cljs.core.List.EMPTY)
 };
-var cow = {cow_count:50, pi:3.1415926535, random_cow:function() {
-  return cljs.core.atom.call(null, cljs.core.ObjMap.fromObject("\ufdd0'anxiety \ufdd0'angle \ufdd0'velocity \ufdd0'x \ufdd0'y \ufdd0'self-differentiation".split(" "), {"\ufdd0'anxiety":0, "\ufdd0'angle":2 * cow.pi - cljs.core.rand.call(null, 4 * cow.pi), "\ufdd0'velocity":cljs.core.rand.call(null), "\ufdd0'x":1 - cljs.core.rand.call(null, 2), "\ufdd0'y":1 - cljs.core.rand.call(null, 2), "\ufdd0'self-differentiation":cljs.core.rand.call(null)}))
+var cow = {cow_count:20, pi:3.1415926535, x_from_polar:function(a, b) {
+  return b * Math.cos.call(null, a)
+}, y_from_polar:function(a, b) {
+  return b * Math.sin.call(null, a)
+}, random_cow:function() {
+  var a = 2 * cow.pi - cljs.core.rand.call(null, 4 * cow.pi), b = cljs.core.rand.call(null);
+  return cljs.core.atom.call(null, cljs.core.ObjMap.fromObject("\ufdd0'anxiety \ufdd0'angle \ufdd0'velocity \ufdd0'x \ufdd0'y \ufdd0'self-differentiation".split(" "), {"\ufdd0'anxiety":0, "\ufdd0'angle":2 * cow.pi - cljs.core.rand.call(null, 4 * cow.pi), "\ufdd0'velocity":cljs.core.rand.call(null, 0.01), "\ufdd0'x":cow.x_from_polar.call(null, a, b), "\ufdd0'y":cow.y_from_polar.call(null, a, b), "\ufdd0'self-differentiation":cljs.core.rand.call(null)}))
 }};
 cow.canvas = clojure.browser.dom.get_element.call(null, "model");
-cow.timer = new goog.Timer(1E3 / 60);
-cow.init_simulator = function() {
-  return cljs.core.doall.call(null, cljs.core.take.call(null, cow.cow_count, cljs.core.repeatedly.call(null, cow.random_cow)))
+cow.timer = new goog.Timer(50);
+cow.cows = cljs.core.doall.call(null, cljs.core.take.call(null, cow.cow_count, cljs.core.repeatedly.call(null, cow.random_cow)));
+cow.sim_cows = function(a) {
+  for(a = cljs.core.seq.call(null, a);;) {
+    if(a) {
+      var b = cljs.core.first.call(null, a), c = (new cljs.core.Keyword("\ufdd0'x")).call(null, cljs.core.deref.call(null, b)) + cow.x_from_polar.call(null, (new cljs.core.Keyword("\ufdd0'angle")).call(null, cljs.core.deref.call(null, b)), (new cljs.core.Keyword("\ufdd0'velocity")).call(null, cljs.core.deref.call(null, b))), d = (new cljs.core.Keyword("\ufdd0'y")).call(null, cljs.core.deref.call(null, b)) + cow.y_from_polar.call(null, (new cljs.core.Keyword("\ufdd0'angle")).call(null, cljs.core.deref.call(null, 
+      b)), (new cljs.core.Keyword("\ufdd0'velocity")).call(null, cljs.core.deref.call(null, b)));
+      cljs.core.swap_BANG_.call(null, b, cljs.core.assoc, "\ufdd0'x", c, "\ufdd0'y", d);
+      a = cljs.core.next.call(null, a)
+    }else {
+      return null
+    }
+  }
 };
-cow.cows = cow.init_simulator.call(null, cow.cow_count);
-cow.paint_cow = function(a) {
-  var b = a.getContext("2d"), c = a.getAttribute("width"), a = a.getAttribute("height"), c = c / 2 + c / 2 * (new cljs.core.Keyword("\ufdd0'x")).call(null, cow.cow), a = a / 2 + a / 2 * (new cljs.core.Keyword("\ufdd0'y")).call(null, cow.cow);
+cow.init_canvas = function(a) {
+  var b = a.getContext("2d"), c = a.getAttribute("width"), a = a.getAttribute("height");
+  b.clearRect(0, 0, c, a);
   b.beginPath();
-  b.fillRect(c, a, 5, 5);
-  return b.closePath()
+  b.arc(c / 2, a / 2, c / 2, 0, 2 * cow.pi, !1);
+  return b.stroke()
+};
+cow.paint_cow = function(a, b) {
+  var c = a.getContext("2d"), d = a.getAttribute("width"), e = a.getAttribute("height"), d = d / 2 + d / 2 * (new cljs.core.Keyword("\ufdd0'x")).call(null, b), e = e / 2 + e / 2 * (new cljs.core.Keyword("\ufdd0'y")).call(null, b);
+  c.beginPath();
+  c.fillRect(d, e, 5, 5);
+  return c.closePath()
 };
 cow.paint_sim = function(a, b) {
+  cow.init_canvas.call(null, a);
   for(var c = cljs.core.seq.call(null, b);;) {
     if(c) {
       var d = cljs.core.first.call(null, c);
@@ -14711,6 +14733,7 @@ cow.paint_sim = function(a, b) {
   }
 };
 cow.cow_sim = function() {
+  cow.sim_cows.call(null, cow.cows);
   return cow.paint_sim.call(null, cow.canvas, cow.cows)
 };
 clojure.browser.event.listen.call(null, cow.timer, goog.Timer.TICK, cow.cow_sim);
