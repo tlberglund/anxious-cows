@@ -37,8 +37,7 @@
 (defn sim-cows [cows]
   (doseq [cow cows]
     (let [new-x (+ (:x @cow) (x-from-polar (:angle @cow) (:velocity @cow)))
-          new-y (+ (:y @cow) (y-from-polar (:angle @cow) (:velocity @cow)))
-          ]
+          new-y (+ (:y @cow) (y-from-polar (:angle @cow) (:velocity @cow)))]
       (swap! cow assoc :x new-x :y new-y))))
 
 (defn init-canvas [canvas]
