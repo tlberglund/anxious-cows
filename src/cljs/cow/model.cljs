@@ -11,7 +11,7 @@
 (defn square [x] (* x x))
 
 (defn hypotenuse [x y] 
-  (sqrt (+ (square x) (square y))))
+  (Math/sqrt (+ (square x) (square y))))
 
 (defn random-cow []
   (let [theta (- (* 2 Math/PI) (rand (* 4 Math/PI)))
@@ -47,9 +47,9 @@
         cow-radius (hypotenuse (:x cow) (:y cow))]
     (> cow-radius fence-radius)))
 
-(def incident-angle [canvas cow]
-
-  )
+(comment ball.angle = 2 * math.atan2(dy, dx) - ball.angle)
+(defn incident-angle [canvas cow]
+  (- (* 2 (Math/atan2 (:y cow) (:x cow))) (:angle cow)))
 
 (defn sim-cows [cows]
   (doseq [cow cows]
