@@ -10,8 +10,9 @@
 
 (defn square [x] (* x x))
 
-(defn hypotenuse [x y] 
-  (Math/sqrt (+ (square x) (square y))))
+(defn hypotenuse 
+  ([x y] (Math/sqrt (+ (square x) (square y))))
+  ([v] (apply hypotenuse v)))
 
 (defn random-cow []
   (let [theta (- (* 2 Math/PI) (rand (* 4 Math/PI)))
@@ -20,8 +21,7 @@
         :anxiety 0
         :angle (- (* 2 Math/PI) (rand (* 4 Math/PI)))
         :velocity (rand 0.01)
-        :x ((polar-to-rect theta radius) 0)
-        :y ((polar-to-rect theta radius) 1)
+        :pos (polar-to-rect theta radius)
         :self-differentiation (rand)
         })]
     cow)
@@ -44,7 +44,7 @@
 (defn hit-fence? [canvas cow]
   (let [width (.getAttribute canvas "width")
         fence-radius (/ width 2)
-        cow-radius (hypotenuse (:x cow) (:y cow))]
+        cow-radius (hypotenuse (:pos cow))]
     (> cow-radius fence-radius)))
 
 (comment ball.angle = 2 * math.atan2(dy, dx) - ball.angle)
@@ -53,19 +53,21 @@
 
 (defn sim-cows [cows]
   (doseq [cow cows]
-    (let [new-x (+ (:x @cow) ((polar-to-rect (:angle @cow) (:velocity @cow)) 0))
-          new-y (+ (:y @cow) ((polar-to-rect (:angle @cow) (:velocity @cow)) 1))]
-      (swap! cow assoc :x new-x :y new-y))))
+    (let [delta-pos (polar-to-rect (:angle @cow) (:velocity @cow))
+          new-pos (vec (map + delta-pos (:pos @cow)))]
+      (swap! cow assoc :pos new-pos))))
+
+(defn cow-to-canvas-coord [canvas-dim cow-coord]
+  (let [dimension (/ canvas-dim 2)]
+    (+ dimension (* dimension cow-coord))))
 
 (defn paint-cow [canvas cow]
   (let [ctx (.getContext canvas "2d")
-        width (.getAttribute canvas "width")
-        height (.getAttribute canvas "height")
-        ctx-x (+ (/ width 2) (* (/ width 2) (:x cow)))
-        ctx-y (+ (/ height 2) (* (/ height 2) (:y cow)))]
+        ctx-size [(.getAttribute canvas "width") (.getAttribute canvas "height")]
+        ctx-pos (vec (map cow-to-canvas-coord ctx-size (:pos cow)))]
     (do 
       (.beginPath ctx)
-      (.fillRect ctx ctx-x ctx-y 5 5))
+      (.fillRect ctx (ctx-pos 0) (ctx-pos 1) 5 5))
       (.closePath ctx)))
 
 (defn paint-sim [canvas cows]
@@ -81,4 +83,4 @@
 
 (event/listen timer goog.Timer/TICK cow-sim)
 (.start timer)
-(.log js/console cows)
+
