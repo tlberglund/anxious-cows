@@ -43,7 +43,7 @@
 
 (defn hit-fence? [cow]
   (let [cow-radius (hypotenuse (:pos cow))]
-    (> cow-radius 1)))
+    (>= cow-radius 1)))
 
 (comment ball.angle = 2 * math.atan2(dy, dx) - ball.angle)
 (defn incident-angle [cow]
@@ -72,14 +72,17 @@
   (let [dimension (/ canvas-dim 2)]
     (+ dimension (* dimension cow-coord))))
 
+(defn draw-box [ctx position]
+  (do 
+    (.beginPath ctx)
+    (.fillRect ctx (- (position 0) 2) (- (position 1) 2) 5 5)
+    (.closePath ctx)))
+
 (defn paint-cow [canvas cow]
   (let [ctx (.getContext canvas "2d")
-        ctx-size [(.getAttribute canvas "width") (.getAttribute canvas "height")]
+        ctx-size (vec (map #(.getAttribute canvas %1) ["width" "height"]))
         ctx-pos (vec (map cow-to-canvas-coord ctx-size (:pos cow)))]
-    (do 
-      (.beginPath ctx)
-      (.fillRect ctx (- (ctx-pos 0) 2) (- (ctx-pos 1) 2) 5 5))
-      (.closePath ctx)))
+    (draw-box ctx ctx-pos)))
 
 (defn paint-sim [canvas cows]
   (do 
