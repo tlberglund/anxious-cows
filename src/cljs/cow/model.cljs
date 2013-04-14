@@ -72,11 +72,20 @@
   (let [dimension (/ canvas-dim 2)]
     (+ dimension (* dimension cow-coord))))
 
-(defn draw-box [ctx position]
-  (do 
-    (.beginPath ctx)
-    (.fillRect ctx (- (position 0) 2) (- (position 1) 2) 5 5)
-    (.closePath ctx)))
+(defn draw-box 
+  ([ctx position width height]
+    (let [half-width (/ width 2)
+          half-height (/ height 2)
+          upper-left (- (position 0) half-width)
+          upper-right (- (position 1) half-height)]
+    (do 
+      (.beginPath ctx)
+      (.fillRect ctx upper-left upper-right width height)
+      (.closePath ctx))))
+  ([ctx position width]
+    (draw-box ctx position width width))
+  ([ctx position]
+    (draw-box ctx position 5)))
 
 (defn paint-cow [canvas cow]
   (let [ctx (.getContext canvas "2d")
