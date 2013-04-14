@@ -41,21 +41,32 @@
       (.arc ctx (/ width 2) (/ height 2) (/ width 2) 0 (* 2 Math/PI) false)
       (.stroke ctx))))
 
-(defn hit-fence? [canvas cow]
-  (let [width (.getAttribute canvas "width")
-        fence-radius (/ width 2)
-        cow-radius (hypotenuse (:pos cow))]
-    (> cow-radius fence-radius)))
+(defn hit-fence? [cow]
+  (let [cow-radius (hypotenuse (:pos cow))]
+    (> cow-radius 1)))
 
 (comment ball.angle = 2 * math.atan2(dy, dx) - ball.angle)
-(defn incident-angle [canvas cow]
+(defn incident-angle [cow]
   (- (* 2 (Math/atan2 (:y cow) (:x cow))) (:angle cow)))
 
+(defn new-cow-angle [cow cows]
+  (if (hit-fence? cow)
+    (incident-angle cow)
+    (:angle cow)))
+
+(defn new-cow-velocity [cow cows]
+  (:velocity cow))
+
 (defn sim-cows [cows]
-  (doseq [cow cows]
-    (let [delta-pos (polar-to-rect (:angle @cow) (:velocity @cow))
-          new-pos (vec (map + delta-pos (:pos @cow)))]
-      (swap! cow assoc :pos new-pos))))
+  (doseq [cow-atom cows]
+    (let [cow @cow-atom
+          new-angle (new-cow-angle cow cows)
+          new-velocity (new-cow-velocity cow cows)
+          delta-pos (polar-to-rect new-angle new-velocity)
+          new-pos (vec (map + delta-pos (:pos cow)))]
+      (swap! cow-atom assoc :pos new-pos 
+                            :angle new-angle 
+                            :velocity new-velocity))))
 
 (defn cow-to-canvas-coord [canvas-dim cow-coord]
   (let [dimension (/ canvas-dim 2)]
@@ -67,7 +78,7 @@
         ctx-pos (vec (map cow-to-canvas-coord ctx-size (:pos cow)))]
     (do 
       (.beginPath ctx)
-      (.fillRect ctx (ctx-pos 0) (ctx-pos 1) 5 5))
+      (.fillRect ctx (- (ctx-pos 0) 2) (- (ctx-pos 1) 2) 5 5))
       (.closePath ctx)))
 
 (defn paint-sim [canvas cows]
