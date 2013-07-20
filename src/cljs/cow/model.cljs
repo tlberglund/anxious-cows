@@ -8,6 +8,12 @@
 (defn polar-to-rect [theta radius]
   [(* radius (Math/cos theta)) (* radius (Math/sin theta))])
 
+(defn rect-to-polar 
+  ([pos]
+   [(Math/asin (/ (pos 1) (pos 0))) (hypotenuse pos)])
+  ([x y]
+    (rect-to-polar [x y])))
+
 (defn square [x] (* x x))
 
 (defn hypotenuse 
@@ -29,7 +35,7 @@
 
 (def canvas (dom/get-element "model"))
 (def timer (goog.Timer. (/ 1000 20)))
-(def cows (doall (take cow-count (repeatedly random-cow))))
+(def cows (repeatedly cow-count random-cow))
 
 (defn init-canvas [canvas]
   (let [ctx (.getContext canvas "2d")
@@ -51,11 +57,18 @@
 
 (defn new-cow-angle [cow cows]
   (if (hit-fence? cow)
-    (incident-angle cow)
+    (:angle cow)
     (:angle cow)))
 
 (defn new-cow-velocity [cow cows]
-  (:velocity cow))
+  (if (hit-fence? cow)
+    (- (:velocity cow))
+    (:velocity cow)))
+
+(defn clip-position [pos]
+  (if (>= (hypotenuse pos) 1)
+    (polar-to-rect ((rect-to-polar pos) 0) 1)
+    pos))
 
 (defn sim-cows [cows]
   (doseq [cow-atom cows]
@@ -63,7 +76,7 @@
           new-angle (new-cow-angle cow cows)
           new-velocity (new-cow-velocity cow cows)
           delta-pos (polar-to-rect new-angle new-velocity)
-          new-pos (vec (map + delta-pos (:pos cow)))]
+          new-pos (clip-position (vec (map + delta-pos (:pos cow))))]
       (swap! cow-atom assoc :pos new-pos 
                             :angle new-angle 
                             :velocity new-velocity))))
