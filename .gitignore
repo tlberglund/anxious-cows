@@ -1,2 +1,4 @@
 javascripts/
 .lein-repl-history
+target/
+
