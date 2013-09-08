@@ -3,33 +3,19 @@
             [clojure.browser.dom :as dom]
             [goog.Timer]))
 
-(def cow-count 20)
+(def cow-count 10)
 
-(defn polar-to-rect [theta radius]
-  [(* radius (Math/cos theta)) (* radius (Math/sin theta))])
-
-(defn rect-to-polar 
-  ([pos]
-   [(Math/asin (/ (pos 1) (pos 0))) (hypotenuse pos)])
-  ([x y]
-    (rect-to-polar [x y])))
-
-(defn square [x] (* x x))
-
-(defn hypotenuse 
-  ([x y] (Math/sqrt (+ (square x) (square y))))
-  ([v] (apply hypotenuse v)))
 
 (defn random-cow []
-  (let [theta (- (* 2 Math/PI) (rand (* 4 Math/PI)))
-        radius (rand)
+  (let [max-velocity 0.001
+        random-velocity (fn [] (- max-velocity (rand (* 2 max-velocity))))
+        random-position (fn [] (- 1 (rand 2)))
         cow (atom {
-        :anxiety 0
-        :angle (- (* 2 Math/PI) (rand (* 4 Math/PI)))
-        :velocity (rand 0.01)
-        :pos (polar-to-rect theta radius)
-        :self-differentiation (rand)
-        })]
+                   :anxiety 0
+                   :velocity (vec (repeatedly 2 random-velocity))
+                   :pos (vec (repeatedly 2 random-position))
+                   :self-differentiation (rand)
+                   })]
     cow)
   )
 
@@ -44,61 +30,60 @@
     (do
       (.clearRect ctx 0 0 width height)
       (.beginPath ctx)
-      (.arc ctx (/ width 2) (/ height 2) (/ width 2) 0 (* 2 Math/PI) false)
+      (.moveTo ctx 0 0)
+      (set! (. ctx -lineWidth) 5)
+      (.lineTo ctx 0 width)
+      (.lineTo ctx width height)
+      (.lineTo ctx height 0)
+      (.lineTo ctx 0 0)
       (.stroke ctx))))
 
-(defn hit-fence? [cow]
-  (let [cow-radius (hypotenuse (:pos cow))]
-    (>= cow-radius 1)))
+(defn hit-fence? 
+  ([cow] (hit-fence? ((:pos cow) 0) ((:pos cow) 1)))
+  ([x y] (every? #(> (Math/abs %) 1) (vector x y))))
 
-(comment ball.angle = 2 * math.atan2(dy, dx) - ball.angle)
-(defn incident-angle [cow]
-  (- (* 2 (Math/atan2 (:y cow) (:x cow))) (:angle cow)))
+(defn new-cow-velocity [cow]
+  (let [velocity (:velocity cow)
+        pos (:pos cow)
+        negate (fn [vec n] (assoc vec n (- (vec n))))]
+    (cond 
+      (> (Math/abs (pos 0)) 0.99) (negate velocity 0)
+      (> (Math/abs (pos 1)) 0.99) (negate velocity 1)
+      :else velocity)))
 
-(defn new-cow-angle [cow cows]
-  (if (hit-fence? cow)
-    (:angle cow)
-    (:angle cow)))
-
-(defn new-cow-velocity [cow cows]
-  (if (hit-fence? cow)
-    (- (:velocity cow))
-    (:velocity cow)))
-
-(defn clip-position [pos]
-  (if (>= (hypotenuse pos) 1)
-    (polar-to-rect ((rect-to-polar pos) 0) 1)
-    pos))
+(defn new-cow-anxiety [cows cow]
+  
+  )
 
 (defn sim-cows [cows]
   (doseq [cow-atom cows]
     (let [cow @cow-atom
-          new-angle (new-cow-angle cow cows)
-          new-velocity (new-cow-velocity cow cows)
-          delta-pos (polar-to-rect new-angle new-velocity)
-          new-pos (clip-position (vec (map + delta-pos (:pos cow))))]
-      (swap! cow-atom assoc :pos new-pos 
-                            :angle new-angle 
-                            :velocity new-velocity))))
+          new-velocity (new-cow-velocity cow)
+          new-pos (vec (map + new-velocity (:pos cow)))
+          new-anxiety (new-cow-anxiety cows cow)]
+      (swap! cow-atom assoc 
+             :anxiety new-anxiety
+             :pos new-pos 
+             :velocity new-velocity))))
+
+(defn draw-box 
+  ([ctx position width height]
+     (let [half-width (/ width 2)
+           half-height (/ height 2)
+           upper-left (- (position 0) half-width)
+           upper-right (- (position 1) half-height)]
+       (do 
+         (.beginPath ctx)
+         (.fillRect ctx upper-left upper-right width height)
+         (.closePath ctx))))
+  ([ctx position width]
+     (draw-box ctx position width width))
+  ([ctx position]
+     (draw-box ctx position 5)))
 
 (defn cow-to-canvas-coord [canvas-dim cow-coord]
   (let [dimension (/ canvas-dim 2)]
     (+ dimension (* dimension cow-coord))))
-
-(defn draw-box 
-  ([ctx position width height]
-    (let [half-width (/ width 2)
-          half-height (/ height 2)
-          upper-left (- (position 0) half-width)
-          upper-right (- (position 1) half-height)]
-    (do 
-      (.beginPath ctx)
-      (.fillRect ctx upper-left upper-right width height)
-      (.closePath ctx))))
-  ([ctx position width]
-    (draw-box ctx position width width))
-  ([ctx position]
-    (draw-box ctx position 5)))
 
 (defn paint-cow [canvas cow]
   (let [ctx (.getContext canvas "2d")
@@ -111,6 +96,10 @@
     (init-canvas canvas)
     (doseq [cow cows]
       (paint-cow canvas @cow))))
+
+(defn update-params [cows]
+  (let [elapsed-time (dom/get-element "elapsed-time")]
+    (.innerHTML elapsed-time (.getTime (java.util.Date.)))))
 
 (defn cow-sim []
   (do

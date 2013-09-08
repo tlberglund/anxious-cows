@@ -14,7 +14,17 @@
 </head>
 <body>
   <div id="cow-pen"><canvas id="model" width="500" height="500"></canvas></div>
-  <div id="parameters"></div>
+  <div id="parameters">
+    <ul>
+      <li id="elapsed-time"></li>
+    </ul>
+  </div>
+  <div id="slider">
+    <span class="min">0</span>
+    <input id="slide" type="range" min="5" max="200" step="5" value="100">
+    <span class="max">100</span>
+  </div>
+
   <script src="javascripts/main.js"></script>
 </body>
 </html>
