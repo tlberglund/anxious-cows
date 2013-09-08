@@ -4,20 +4,20 @@
             [goog.Timer]))
 
 (def cow-count 10)
-
+(def max-starting-velocity 0.005)
+(def max-turn-degrees 45)
 
 (defn random-cow []
-  (let [max-velocity 0.001
+  (let [max-velocity max-starting-velocity
         random-velocity (fn [] (- max-velocity (rand (* 2 max-velocity))))
         random-position (fn [] (- 1 (rand 2)))
         cow (atom {
                    :anxiety 0
-                   :velocity (vec (repeatedly 2 random-velocity))
-                   :pos (vec (repeatedly 2 random-position))
+                   :velocity [(random-velocity) (random-velocity)]
+                   :pos [(random-position) (random-position)]
                    :self-differentiation (rand)
                    })]
-    cow)
-  )
+    cow))
 
 (def canvas (dom/get-element "model"))
 (def timer (goog.Timer. (/ 1000 20)))
@@ -38,9 +38,28 @@
       (.lineTo ctx 0 0)
       (.stroke ctx))))
 
+
 (defn hit-fence? 
   ([cow] (hit-fence? ((:pos cow) 0) ((:pos cow) 1)))
   ([x y] (every? #(> (Math/abs %) 1) (vector x y))))
+
+
+(defn perturb-vector [velocity heading]
+  (let [polar (math/rect-to-polar velocity)
+        perturbation-angle (* (/ max-turn-degrees 180) Math/PI)
+        perturbed-polar (assoc polar 
+                               0 
+                               (+ math/rand-normal perturbation-angle))]
+    (math/polar-to-rect perturbed-polar)))
+
+
+(defn random-walk [cow]
+  (let [velocity (:velocity cow)
+        vx (velocity 0)
+        vy (velocity 1)
+        heading (Math/atan (/ vy vx))
+        wander (fn [] (rand (* (/ 10 180) Math/PI)))]
+    [(:velocity cow)]))
 
 (defn new-cow-velocity [cow]
   (let [velocity (:velocity cow)
@@ -51,9 +70,7 @@
       (> (Math/abs (pos 1)) 0.99) (negate velocity 1)
       :else velocity)))
 
-(defn new-cow-anxiety [cows cow]
-  
-  )
+(defn new-cow-anxiety [cows cow] ())
 
 (defn sim-cows [cows]
   (doseq [cow-atom cows]
