@@ -1,4 +1,6 @@
 javascripts/
 .lein-repl-history
 target/
+out/
+repl/
 

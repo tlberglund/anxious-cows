@@ -3,15 +3,40 @@
             [clojure.browser.dom :as dom]
             [goog.Timer]))
 
-(def cow-count 10)
-(def max-starting-velocity 0.005)
-(def max-turn-degrees 45)
+(def cow-count 5)
+(def max-starting-velocity 0.01)
+(def max-turn-degrees 180)
 
+
+(defn polar-to-rect 
+  ([v] (apply polar-to-rect v))
+  ([theta radius]
+    [(* radius (Math/cos theta)) (* radius (Math/sin theta))]))
+
+(defn square [x] (* x x))
+
+(defn hypotenuse
+  ([x y] (Math/sqrt (+ (square x) (square y))))
+  ([v] (apply hypotenuse v)))
+
+(defn rect-to-polar
+  ([v] (apply rect-to-polar v))
+  ([x y]
+    [(Math/atan (/ y x)) (hypotenuse [x y])]))
+
+(defn rand-normal [mean stddev]
+  (+ mean (* (- (/ (reduce + (repeatedly 10 rand)) 10) 0.5) stddev)))
+
+(defn degrees-to-radians [deg]
+  (* (/ deg 180) Math/PI))
+
+(def cow-id (atom 0))
 (defn random-cow []
-  (let [max-velocity max-starting-velocity
-        random-velocity (fn [] (- max-velocity (rand (* 2 max-velocity))))
-        random-position (fn [] (- 1 (rand 2)))
+  (let [random-velocity (fn [] (- max-starting-velocity (rand (* 2 max-starting-velocity))))
+        ; random-position (fn [] (- 1 (rand 2)))
+        random-position (fn [] (rand-normal 0 1))
         cow (atom {
+                   :id (swap! cow-id inc)
                    :anxiety 0
                    :velocity [(random-velocity) (random-velocity)]
                    :pos [(random-position) (random-position)]
@@ -20,7 +45,6 @@
     cow))
 
 (def canvas (dom/get-element "model"))
-(def timer (goog.Timer. (/ 1000 20)))
 (def cows (repeatedly cow-count random-cow))
 
 (defn init-canvas [canvas]
@@ -44,22 +68,27 @@
   ([x y] (every? #(> (Math/abs %) 1) (vector x y))))
 
 
+; (defn perturb-vector [velocity heading]
+;   (let [polar (rect-to-polar velocity)
+;         perturbed-polar (assoc polar 0 (+ (polar 0) heading))]
+;     (polar-to-rect polar)))
 (defn perturb-vector [velocity heading]
-  (let [polar (math/rect-to-polar velocity)
-        perturbation-angle (* (/ max-turn-degrees 180) Math/PI)
-        perturbed-polar (assoc polar 
-                               0 
-                               (+ math/rand-normal perturbation-angle))]
-    (math/polar-to-rect perturbed-polar)))
+  (let [polar (rect-to-polar velocity)
+        perturbed-polar (assoc polar 0 (+ (polar 0) heading))]
+    (polar-to-rect polar)))
 
 
 (defn random-walk [cow]
   (let [velocity (:velocity cow)
         vx (velocity 0)
         vy (velocity 1)
+        random-x (rand-normal vx (* 2 max-starting-velocity))
+        random-y (rand-normal vy (* 2 max-starting-velocity))
         heading (Math/atan (/ vy vx))
-        wander (fn [] (rand (* (/ 10 180) Math/PI)))]
-    [(:velocity cow)]))
+        wander (* (rand-normal 0 (degrees-to-radians max-turn-degrees)))]
+    ; (perturb-vector (:velocity cow) wander)))
+    ; (:velocity cow)))
+    [random-x random-y]))
 
 (defn new-cow-velocity [cow]
   (let [velocity (:velocity cow)
@@ -68,7 +97,8 @@
     (cond 
       (> (Math/abs (pos 0)) 0.99) (negate velocity 0)
       (> (Math/abs (pos 1)) 0.99) (negate velocity 1)
-      :else velocity)))
+      :else (random-walk cow))))
+      ; :else (:velocity cow))))
 
 (defn new-cow-anxiety [cows cow] ())
 
@@ -114,15 +144,45 @@
     (doseq [cow cows]
       (paint-cow canvas @cow))))
 
+(defn update-cow-debug [element cows]
+  (letfn [(render-pos [cow] (:pos cow))
+          (render-velocity [cow] (:velocity cow))
+          (render-anxiety [cow] (:anxiety cow))
+          (render-sd [cow] (:self-differentiation cow))
+          (cow-parms [cow] (map #(cow %) [:pos :velocity :anxiety :self-differentiation]))
+          (cow-cells [cow] (apply str (map #(dom/element "td" (str %)) (cow-parms cow))))
+          (cow-row [cow] (dom/element "tr" (cow-cells cow)))]
+      (let [rows (map #(cow-row @%) cows)]
+        (dom/append element rows))))
+
 (defn update-params [cows]
   (let [elapsed-time (dom/get-element "elapsed-time")]
-    (.innerHTML elapsed-time (.getTime (java.util.Date.)))))
+    (dom/set-text elapsed-time (js/Date.))))
+    ; (update-cow-debug "cow-table-body" cows)))
+
 
 (defn cow-sim []
   (do
     (sim-cows cows)
+    (update-params cows)
     (paint-sim canvas cows)))
 
+(defn build-cow-table []
+  (dom/append (dom/get-element "parameters")
+    (dom/element "table" {:id "cows"} (dom/element "thead")  )))
+
+
+ ; (dom/append
+ ;      (dom/element "thead"
+ ;        (dom/element "td" "Position")
+ ;        (dom/element "td" "Velocity")
+ ;        (dom/element "td" "Anxiety")
+ ;        (dom/element "td" "S-D"))
+ ;      (dom/element "tbody"
+ ;        (repeatedly cow-count 
+ ;          (dom/element "row"))))))
+
+(def timer (goog.Timer. (/ 1000 20)))
 (event/listen timer goog.Timer/TICK cow-sim)
 (.start timer)
-
+(build-cow-table)
