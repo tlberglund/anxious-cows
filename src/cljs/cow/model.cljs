@@ -1,7 +1,9 @@
 (ns cow
   (:require [clojure.browser.event :as event]
             [clojure.browser.dom :as dom]
-            [goog.Timer]))
+            [goog.Timer]
+            [crate.core :as crate])
+  (:use [domina :only [by-id set-html! set-text! set-value!]]))
 
 (def cow-count 5)
 (def max-starting-velocity 0.01)
@@ -22,7 +24,7 @@
 (defn rect-to-polar
   ([v] (apply rect-to-polar v))
   ([x y]
-    [(Math/atan (/ y x)) (hypotenuse [x y])]))
+    [(Math/atan (/ y x)) (hypotenuse x y)]))
 
 (defn rand-normal [mean stddev]
   (+ mean (* (- (/ (reduce + (repeatedly 10 rand)) 10) 0.5) stddev)))
@@ -86,9 +88,9 @@
         random-y (rand-normal vy (* 2 max-starting-velocity))
         heading (Math/atan (/ vy vx))
         wander (* (rand-normal 0 (degrees-to-radians max-turn-degrees)))]
-    ; (perturb-vector (:velocity cow) wander)))
+    (perturb-vector (:velocity cow) wander)))
     ; (:velocity cow)))
-    [random-x random-y]))
+    ; [random-x random-y]))
 
 (defn new-cow-velocity [cow]
   (let [velocity (:velocity cow)
@@ -155,10 +157,35 @@
       (let [rows (map #(cow-row @%) cows)]
         (dom/append element rows))))
 
+(defn cow-table [cows]
+  (let [row-count (atom 0)
+        format-num (fn [num] (format "%1.04f" num))
+        format-pair (fn [vec] (str "(" (apply str (interpose ", " (map format-num vec))) ")"))
+        render-pos (fn [cow] (format-pair (:pos cow)))
+        render-velocity (fn [cow] (format-pair (:velocity cow)))
+        render-anxiety (fn [cow] (:anxiety cow))
+        render-sd (fn [cow] (format-num (:self-differentiation cow)))
+    ]
+    (crate/html 
+      [:table#cows {:width "100%"}
+        [:thead 
+          [:tr [:th "Cow"] [:th "Position"] [:th "Velocity"] [:th "Anxiety"] [:th "SD"]]
+        ]
+        [:tbody 
+          (map
+            #(crate/html [:tr {:id (str "cow-row-" (swap! row-count inc))}
+              [:td (str (:id %))]
+              [:td {:id (str "cow-position-" @row-count)} (render-pos %)]
+              [:td {:id (str "cow-velocity-" @row-count)} (render-velocity %)]
+              [:td {:id (str "cow-anxiety-" @row-count)} (render-anxiety %)]
+              [:td {:id (str "cow-sd-" @row-count)} (render-sd %)]])
+            (map deref cows))
+        ]
+      ])))
+
 (defn update-params [cows]
-  (let [elapsed-time (dom/get-element "elapsed-time")]
-    (dom/set-text elapsed-time (js/Date.))))
-    ; (update-cow-debug "cow-table-body" cows)))
+  (set-text! (by-id "elapsed-time") (js/Date.))
+  (set-html! (by-id "cow-table") (cow-table cows)))
 
 
 (defn cow-sim []
@@ -167,22 +194,11 @@
     (update-params cows)
     (paint-sim canvas cows)))
 
-(defn build-cow-table []
-  (dom/append (dom/get-element "parameters")
-    (dom/element "table" {:id "cows"} (dom/element "thead")  )))
-
-
- ; (dom/append
- ;      (dom/element "thead"
- ;        (dom/element "td" "Position")
- ;        (dom/element "td" "Velocity")
- ;        (dom/element "td" "Anxiety")
- ;        (dom/element "td" "S-D"))
- ;      (dom/element "tbody"
- ;        (repeatedly cow-count 
- ;          (dom/element "row"))))))
-
+              
 (def timer (goog.Timer. (/ 1000 20)))
+(event/listen (by-id "run-sim") goog.events.EventType.CLICK #(.start timer))
+(event/listen (by-id "stop-sim") goog.events.EventType.CLICK #(.stop timer))
+(event/listen (by-id "step-sim") goog.events.EventType.CLICK #(cow-sim))
 (event/listen timer goog.Timer/TICK cow-sim)
 (.start timer)
-(build-cow-table)
+
