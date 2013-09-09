@@ -4,9 +4,8 @@
 (def cow-count 10)
 (def max-starting-velocity 0.01)
 (def max-turn-degrees 180)
-
-
 (def cow-id (atom 0))
+
 (defn random-cow []
   (let [random-velocity (fn [] (- max-starting-velocity (rand (* 2 max-starting-velocity))))
         random-position (fn [] (math/rand-normal 0 1))
@@ -20,22 +19,6 @@
     cow))
 
 (def cows (repeatedly cow-count random-cow))
-
-(defn init-canvas [canvas]
-  (let [ctx (.getContext canvas "2d")
-        width (.getAttribute canvas "width")
-        height (.getAttribute canvas "height")]
-    (do
-      (.clearRect ctx 0 0 width height)
-      (.beginPath ctx)
-      (.moveTo ctx 0 0)
-      (set! (. ctx -lineWidth) 5)
-      (.lineTo ctx 0 width)
-      (.lineTo ctx width height)
-      (.lineTo ctx height 0)
-      (.lineTo ctx 0 0)
-      (.stroke ctx))))
-
 
 (defn hit-fence? 
   ([cow] (hit-fence? ((:pos cow) 0) ((:pos cow) 1)))
@@ -83,49 +66,6 @@
              :anxiety new-anxiety
              :pos new-pos 
              :velocity new-velocity))))
-
-(defn draw-box 
-  ([ctx position width height fill-style]
-     (let [half-width (/ width 2)
-           half-height (/ height 2)
-           upper-left (- (position 0) half-width)
-           upper-right (- (position 1) half-height)]
-       (do 
-         (.beginPath ctx)
-         (set! (. ctx -fillStyle) fill-style)
-         (.fillRect ctx upper-left upper-right width height)
-         (.closePath ctx))))
-  ([ctx position width fill-style]
-     (draw-box ctx position width width fill-style))
-  ([ctx position fill-style]
-     (draw-box ctx position 5 fill-style)))
-
-(defn draw-circle [ctx position radius fill-style]
-  (do
-    (set! (. ctx -fillStyle) fill-style)
-    (.beginPath ctx)
-    (.arc ctx (position 0) (position 1) radius 0 (* 2 Math/PI) true)
-    (.closePath ctx)
-    (.fill ctx)))
-
-(defn cow-to-canvas-coord [canvas-dim cow-coord]
-  (let [dimension (/ canvas-dim 2)]
-    (+ dimension (* dimension cow-coord))))
-
-(defn paint-cow [canvas cow]
-  (let [ctx (.getContext canvas "2d")
-        ctx-size (vec (map #(.getAttribute canvas %1) ["width" "height"]))
-        ctx-pos (vec (map cow-to-canvas-coord ctx-size (:pos cow)))
-        cow-color (str "rgb(" (format "%d" (int (* 256 (:anxiety cow)))) ",0,0)")
-        cow-size (int (+ 5 (* 15 (:anxiety cow))))]
-    ; (draw-box ctx ctx-pos cow-size cow-color)))
-    (draw-circle ctx ctx-pos cow-size cow-color)))
-
-(defn paint-sim [canvas cows]
-  (do 
-    (init-canvas canvas)
-    (doseq [cow cows]
-      (paint-cow canvas @cow))))
 
 
 
