@@ -4,7 +4,7 @@
             [goog.Timer]
             [crate.core :as crate])
   (:use [domina :only [by-id set-html! set-text! set-value! set-style!]]
-        [cow.model :only [cows sim-cows]]))
+        [cow.model :only [cows sim-cows hit-fence? anxiety-near-me]]))
 
 (def canvas (by-id "model"))
 
@@ -16,13 +16,13 @@
         render-pos (fn [cow] (format-pair (:pos cow)))
         render-velocity (fn [cow] (format-pair (:velocity cow)))
         render-anxiety (fn [cow] (format-num (:anxiety cow)))
-        render-sd (fn [cow] (format-num (:self-differentiation cow)))
+        render-sd (fn [cow] (format "%3d" (* 100 (:self-differentiation cow))))
         td-id (fn [prefix] (str prefix @row-count))
     ]
     (crate/html 
       [:table#cows {:width "100%"}
         [:thead 
-          [:tr [:th "Cow"] [:th "Position"] [:th "Velocity"] [:th "Anxiety"] [:th "SD"]]
+          [:tr [:th "Cow"] [:th "Position"] [:th "Velocity"] [:th "Anxiety"] [:th "SD"] [:th "Debug"]]
         ]
         [:tbody 
           (map
@@ -31,14 +31,17 @@
               [:td {:id (td-id "cow-position-")} (render-pos %)]
               [:td {:id (td-id "cow-velocity-")} (render-velocity %)]
               [:td {:id (td-id "cow-anxiety-")} (render-anxiety %)]
-              [:td {:id (td-id "cow-sd-")} (render-sd %)]])
+              [:td {:id (td-id "cow-sd-")} (render-sd %)]
+              [:td]
+              ])
             (map deref cows))
         ]
       ])))
 
 (defn update-params [cows]
   (set-text! (by-id "elapsed-time") (js/Date.))
-  (set-html! (by-id "cow-table") (cow-table cows)))
+  ; (set-html! (by-id "cow-table") (cow-table cows))
+  )
 
 
 (defn init-canvas [canvas]
@@ -75,7 +78,12 @@
         cow-color (str "rgb(" (format "%d" (int (* 256 (:anxiety cow)))) ",0,0)")
         cow-size (int (+ 5 (* 15 (:anxiety cow))))]
     ; (draw-box ctx ctx-pos cow-size cow-color)))
-    (draw-circle ctx ctx-pos cow-size cow-color)))
+    (do
+      (draw-circle ctx ctx-pos cow-size cow-color)
+      ; (set! (. ctx -fillStyle) "#303030")
+      ; (set! (. ctx -font) "8pt Arial")
+      ; (.fillText ctx (str (:id cow)) (+ (ctx-pos 0) 10) (+ (ctx-pos 1) 4))
+      )))
 
 (defn paint-sim [canvas cows]
   (do 
@@ -84,20 +92,30 @@
       (paint-cow canvas @cow))))
 
 
+(def frame-count (atom 0))
+
 (defn cow-sim []
   (do
+    (swap! frame-count inc)
     (sim-cows cows)
     (update-params cows)
     (paint-sim canvas cows)))
 
-(def timer (goog.Timer. (/ 1000 20)))
-(event/listen (by-id "run-sim") goog.events.EventType.CLICK #(.start timer))
-(event/listen (by-id "stop-sim") goog.events.EventType.CLICK #(.stop timer))
+(defn update-fps []
+  (set-text! (by-id "fps") (str @frame-count))
+  (swap! frame-count (fn [] 0)))
+
+(def sim-timer (goog.Timer. (/ 1000 20)))
+(def fps-timer (goog.Timer. 1000))
+(event/listen (by-id "run-sim") goog.events.EventType.CLICK #(.start sim-timer))
+(event/listen (by-id "stop-sim") goog.events.EventType.CLICK #(.stop sim-timer))
 (event/listen (by-id "step-sim") goog.events.EventType.CLICK #(cow-sim))
-(event/listen timer goog.Timer/TICK cow-sim)
+(event/listen sim-timer goog.Timer/TICK cow-sim)
+(event/listen fps-timer goog.Timer/TICK update-fps)
 (update-params cows)
 (paint-sim canvas cows)
-; (.start timer)
+(.start fps-timer)
+; (.start sim-timer)
 
 
 
