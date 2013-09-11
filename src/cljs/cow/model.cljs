@@ -73,9 +73,6 @@ painful asymptote to deal with, and we don't likes those.)"
 (defn anxiety-near-me [cows cow]
   (let [anxiety-horizon 0.8
         nearby-cows (filter #(> anxiety-horizon (cow-distance cow @%)) cows)]
-    ; (.log js/console (str "***********" (:id cow)))
-    ; (.log js/console (apply str (map #(format "%1.4f," %) (map #(cow-distance cow @%) cows))))
-    ; (.log js/console (apply str (map #(format "%d " %) (map #(:id @%) nearby-cows))))
   ; (math/average (map #(distance-discounted-anxiety cow @%) nearby-cows))))
     (apply max (map #(:anxiety @%) nearby-cows))))
 
@@ -84,8 +81,6 @@ painful asymptote to deal with, and we don't likes those.)"
         ; local-maximum (apply max (map #(distance-discounted-anxiety cow @%) cows))
         nearby-anxiety (anxiety-near-me cows cow)
         assumed-anxiety (* (- 1 (:self-differentiation cow)) nearby-anxiety)
-        ; nearby-anxiety (anxiety-near-me cows cow)
-        ; differentiated-anxiety (* (- 1 (:self-differentiation cow)) nearby-anxiety)
         ]
     ; (.log js/console nearby-anxiety " " assumed-anxiety)
     (cond
