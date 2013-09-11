@@ -14,13 +14,14 @@
         format-num (fn [num] (format "%1.04f" num))
         format-pair (fn [vec] (str "(" (apply str (interpose ", " (map format-num vec))) ")"))
         render-velocity (fn [cow] (format-pair (:velocity cow)))
+        render-anxiety (fn [cow] (format-num (:anxiety cow)))
         render-pos (fn [cow] (format-pair (:pos cow)))
         td-id (fn [prefix] (str prefix @row-count))
        ]
     (crate/html 
       [:table#cows {:width "100%"}
         [:thead 
-          [:tr [:th "Cow"] [:th "Position"] [:th "Velocity"]]
+          [:tr [:th "Cow"] [:th "Position"] [:th "Velocity"] [:th "Anxiety"]]
         ]
         [:tbody 
           (map
@@ -28,6 +29,7 @@
               [:td (str (:id %))]
               [:td {:id (td-id "cow-position-")} (render-pos %)]
               [:td {:id (td-id "cow-velocity-")} (render-velocity %)]
+              [:td {:id (td-id "cow-anxiety-")} (render-anxiety %)]
               ])
             (map deref cows))
         ]
@@ -70,8 +72,8 @@
   (let [ctx (.getContext canvas "2d")
         ctx-size (vec (map #(.getAttribute canvas %1) ["width" "height"]))
         ctx-pos (vec (map cow-to-canvas-coord ctx-size (:pos cow)))
-        cow-color "#000000"
-        cow-size 10]
+        cow-color (str "rgb(" (format "%d" (int (* 256 (:anxiety cow)))) ",0,0)")
+        cow-size (int (+ 5 (* 15 (:anxiety cow))))]
     (do
       (draw-circle ctx ctx-pos cow-size cow-color)
       (if @display-ids (do
