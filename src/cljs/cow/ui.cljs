@@ -1,8 +1,32 @@
 (ns cow.ui
-  (:use [domina :only [by-id]]
+  (:require [crate.core :as crate])
+  (:use [domina :only [by-id set-html!]]
         [cow.model :only [cows]]))
 
 (def canvas (by-id "cow-pen"))
+
+
+(defn cow-table [cows]
+  (let [row-count (atom 0)
+        format-num (fn [num] (format "%1.04f" num))
+        format-pair (fn [vec] (str "(" (apply str (interpose ", " (map format-num vec))) ")"))
+        render-pos (fn [cow] (format-pair (:pos cow)))
+        td-id (fn [prefix] (str prefix @row-count))
+       ]
+    (crate/html 
+      [:table#cows {:width "100%"}
+        [:thead 
+          [:tr [:th "Cow"] [:th "Position"]]
+        ]
+        [:tbody 
+          (map
+            #(crate/html [:tr {:id (str "cow-row-" (swap! row-count inc))}
+              [:td (str (:id %))]
+              [:td {:id (td-id "cow-position-")} (render-pos %)]
+              ])
+            (map deref cows))
+        ]
+      ])))
 
 (defn init-canvas [canvas]
   (let [ctx (.getContext canvas "2d")
@@ -38,7 +62,6 @@
         cow-color "#000000"
         cow-size 10]
     (do
-      (.log js.console (str ctx-pos))
       (draw-circle ctx ctx-pos cow-size cow-color))))
 
 (defn paint-sim [canvas cows]
@@ -47,9 +70,8 @@
     (doseq [cow cows]
       (paint-cow canvas @cow))))
 
-(.log js/console (str (map deref cows)))
 (paint-sim canvas cows)
-
+(set-html! (by-id "cow-table") (cow-table cows))
 
 
 
