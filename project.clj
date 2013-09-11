@@ -1,5 +1,5 @@
 (defproject anxious-cows "0.1.0-SNAPSHOT"
-            :description "An agent model of anxiety"
+            :description "An agent model of anxiety. Also cows."
             :dependencies [[org.clojure/clojure "1.5.0"]
                            [crate "0.2.4"]
                            [domina "1.0.1"]]
