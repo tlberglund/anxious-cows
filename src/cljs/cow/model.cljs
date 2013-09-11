@@ -29,8 +29,10 @@
         pos (:pos cow)
         negate (fn [vec n] (assoc vec n (- (vec n))))]
     (cond
-      (> (Math/abs (pos 0)) 0.97) (negate velocity 0)
-      (> (Math/abs (pos 1)) 0.97) (negate velocity 1)
+      (> (Math/abs (pos 0)) 0.97) 
+        (negate velocity 0)
+      (> (Math/abs (pos 1)) 0.97) 
+        (negate velocity 1)
       :else velocity)))
 
 (defn cow-distance [self-cow other-cow]
@@ -56,7 +58,7 @@
       ; slowly chill out
       :else (* (:anxiety cow) 0.95))))
 
-(defn sim-cows [cows]
+(defn sim-cows [cows collision]
   (doseq [cow-atom cows]
     (let [cow @cow-atom
           new-velocity (new-cow-velocity cow)
