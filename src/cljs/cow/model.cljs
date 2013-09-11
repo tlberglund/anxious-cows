@@ -1,7 +1,7 @@
 (ns cow.model
   (:require [cow.math :as math]))
 
-(def cow-count 100)
+(def cow-count 10)
 (def max-starting-velocity 0.01)
 (def max-turn-degrees 180)
 (def cow-id (atom 0))
@@ -71,7 +71,7 @@ painful asymptote to deal with, and we don't likes those.)"
     (* (:anxiety other-cow) inverse-square)))
 
 (defn anxiety-near-me [cows cow]
-  (let [anxiety-horizon 0.4
+  (let [anxiety-horizon 0.8
         nearby-cows (filter #(> anxiety-horizon (cow-distance cow @%)) cows)]
     ; (.log js/console (str "***********" (:id cow)))
     ; (.log js/console (apply str (map #(format "%1.4f," %) (map #(cow-distance cow @%) cows))))

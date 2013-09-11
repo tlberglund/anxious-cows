@@ -29,11 +29,19 @@ th,td {
     <input id="run-sim" type="button" value="Run">
     <input id="stop-sim" type="button" value="Stop">
     <input id="step-sim" type="button" value="Step">
+    <div id="controls">
+      <div>
+        <input id="chk-refresh-table" type="checkbox" checked><label for="chk-refresh-table">Refresh Table</label>
+      </div>
+      <div>
+        <input id="chk-display-ids" type="checkbox"><label for="chk-display-ids">Display Cow IDs</label>
+      </div>
+    </div>
     <div id="cow-table"></div>
     <div id="elapsed-time"></div>
     <div><span id="fps">0</span> fps</div>
   </div>
-  <image id="cow-image" src="images/norwegian-red.jpg" style="display: none;">
+  <image id="cow-image" src="images/norwegian-red.png" style="display: none;">
   <script src="javascripts/main.js"></script>
 </body>
 </html>

@@ -7,7 +7,8 @@
         [cow.model :only [cows sim-cows hit-fence? anxiety-near-me]]))
 
 (def canvas (by-id "model"))
-
+(def refresh-table (atom true))
+(def display-ids (atom false))
 
 (defn cow-table [cows]
   (let [row-count (atom 0)
@@ -40,7 +41,8 @@
 
 (defn update-params [cows]
   (set-text! (by-id "elapsed-time") (js/Date.))
-  ; (set-html! (by-id "cow-table") (cow-table cows))
+  (if @refresh-table 
+      (set-html! (by-id "cow-table") (cow-table cows)))
   )
 
 
@@ -77,13 +79,13 @@
         ctx-pos (vec (map cow-to-canvas-coord ctx-size (:pos cow)))
         cow-color (str "rgb(" (format "%d" (int (* 256 (:anxiety cow)))) ",0,0)")
         cow-size (int (+ 5 (* 15 (:anxiety cow))))]
-    ; (draw-box ctx ctx-pos cow-size cow-color)))
     (do
       (draw-circle ctx ctx-pos cow-size cow-color)
-      ; (set! (. ctx -fillStyle) "#303030")
-      ; (set! (. ctx -font) "8pt Arial")
-      ; (.fillText ctx (str (:id cow)) (+ (ctx-pos 0) 10) (+ (ctx-pos 1) 4))
-      )))
+      (if @display-ids (do
+        (set! (. ctx -fillStyle) "#303030")
+        (set! (. ctx -font) "8pt Arial")
+        (.fillText ctx (str (:id cow)) (+ (ctx-pos 0) 10) (+ (ctx-pos 1) 4))))
+    )))
 
 (defn paint-sim [canvas cows]
   (do 
@@ -112,10 +114,16 @@
 (event/listen (by-id "step-sim") goog.events.EventType.CLICK #(cow-sim))
 (event/listen sim-timer goog.Timer/TICK cow-sim)
 (event/listen fps-timer goog.Timer/TICK update-fps)
+(event/listen (by-id "chk-refresh-table") 
+              goog.events.EventType.CLICK 
+              #(swap! refresh-table not))
+(event/listen (by-id "chk-display-ids") 
+              goog.events.EventType.CLICK 
+              #(swap! display-ids not))
 (update-params cows)
 (paint-sim canvas cows)
 (.start fps-timer)
-; (.start sim-timer)
+
 
 
 
