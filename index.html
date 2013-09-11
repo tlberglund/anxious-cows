@@ -12,7 +12,7 @@ body {
 }
 #parameters {
   float: left;
-  width: 22%;
+  width: 38%;
 }
 th {
   font-family: 'Gudea';
@@ -26,7 +26,20 @@ th,td {
 <body>
   <div><canvas id="cow-pen" width="600" height="600"></canvas></div>
   <div id="parameters">
+    <input id="run-sim" type="button" value="Run">
+    <input id="stop-sim" type="button" value="Stop">
+    <input id="step-sim" type="button" value="Step">
+    <div id="controls">
+      <div>
+        <input id="chk-refresh-table" type="checkbox" checked><label for="chk-refresh-table">Refresh Table</label>
+      </div>
+      <div>
+        <input id="chk-display-ids" type="checkbox"><label for="chk-display-ids">Display Cow IDs</label>
+      </div>
+    </div>
     <div id="cow-table"></div>
+    <div id="elapsed-time"></div>
+    <div><span id="fps">0</span> fps</div>
   </div>
 
   </div>
