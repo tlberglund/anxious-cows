@@ -1,6 +1,5 @@
 (ns cow.ui
   (:require [clojure.browser.event :as event]
-            [clojure.browser.dom :as dom]
             [goog.Timer]
             [crate.core :as crate])
   (:use [domina :only [by-id set-html! set-text! set-value! set-style!]]
