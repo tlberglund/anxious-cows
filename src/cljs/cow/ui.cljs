@@ -10,10 +10,13 @@
 (def display-ids (atom false))
 (def render-cow-images (atom false))
 (def cow-image (by-id "cow-image"))
-(def moo-sounds (vec (map by-id (map #(str "moo-" %) [1 2 3 4]))))
 
-(defn random-moo []
-  (let [moo-count (count moo-sounds)]
+(defn random-moo 
+  "Look for audio elements called 'moo-1', 'moo-2', etc.
+and play one of them at random."
+  []
+  (let [moo-sounds (vec (map by-id (map #(str "moo-" %) [1 2 3 4])))
+        moo-count (count moo-sounds)]
     (moo-sounds (rand-int moo-count))))
 
 (defn play-random-moo []
@@ -58,7 +61,7 @@
   (let [ctx (.getContext canvas "2d")
         width (.getAttribute canvas "width")
         height (.getAttribute canvas "height")]
-    (do
+    (doto
       (.clearRect ctx 0 0 width height)
       (.beginPath ctx)
       (.moveTo ctx 0 0)

@@ -2,7 +2,7 @@
   (:require [cow.math :as math]))
 
 
-(def cow-count 25)
+(def cow-count 100)
 (def max-starting-velocity 0.01)
 (def cow-id (atom 0))
 
@@ -22,7 +22,8 @@
 
 (defn hit-fence?
   "Or, you know, come within 96% of the fence."
-  [cow] (not (not-any? #(>= (Math/abs %) 0.96) (:pos cow))))
+  [cow] 
+  (not (not-any? #(>= (Math/abs %) 0.96) (:pos cow))))
 
 (defn new-cow-velocity [cow]
   (let [velocity (:velocity cow)
