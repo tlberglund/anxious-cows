@@ -61,7 +61,7 @@ and play one of them at random."
   (let [ctx (.getContext canvas "2d")
         width (.getAttribute canvas "width")
         height (.getAttribute canvas "height")]
-    (doto
+    (do
       (.clearRect ctx 0 0 width height)
       (.beginPath ctx)
       (.moveTo ctx 0 0)
