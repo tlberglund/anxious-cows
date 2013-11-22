@@ -8,9 +8,10 @@ This is the code supporting my talk, _Anxiouw Cows in ClojureScript_.
 
 1. Have [Leiningen installed](https://github.com/technomancy/leiningen#installation)
 2. Clone this repo
-3. Run `lein clsjbuild once` from the root of the repo
-4. Open `index.html`
-4. Profit
+3. Check out the relevant branch shown below
+4. Run `lein clsjbuild once` from the root of the repo
+5. Open `index.html`
+6. Profit
 
 ## Branches
 
