@@ -58,7 +58,7 @@
       ; slowly chill out
       :else (* (:anxiety cow) 0.95))))
 
-(defn sim-cows [cows collision]
+(defn sim-cows [cows]
   (doseq [cow-atom cows]
     (let [cow @cow-atom
           new-velocity (new-cow-velocity cow)
