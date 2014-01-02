@@ -1,6 +1,6 @@
 # Anxious Cows: An Agent Model
 
-This is the code supporting my talk, _Anxiouw Cows in ClojureScript_.
+This is the code supporting my talk, _Anxious Cows in ClojureScript_.
 
 ![norwegian-red](https://f.cloud.github.com/assets/63223/1602849/3d9f9c86-539f-11e3-9f34-264e1a094acb.png)
 
